@@ -100,5 +100,5 @@ IMD_ANOMALY_CATEGORIES = [
 
 # Server Settings
 SERVER_HOST = "0.0.0.0."
-SERVER_PORT = 5000
+SERVER_PORT = int(os.environ.get("PORT",5000))
 DEBUG_MODE = False
