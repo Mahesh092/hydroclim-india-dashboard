@@ -2,44 +2,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HydroClim India Dashboard</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 40px 20px;
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
-            text-align: center;
-        }
-        .card {
-            max-width: 750px;
-            margin: 40px auto;
-            padding: 30px;
-            background: #1e293b;
-            border-radius: 16px;
-        }
-        h1 { color: #38bdf8; }
-        p { color: #cbd5e1; line-height: 1.7; }
-        a {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 12px 22px;
-            background: #0284c7;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HydroClim India Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: #eaf4ff;
+      background: linear-gradient(135deg, #06152e, #0b3150);
+    }
+    header {
+      padding: 28px 6%;
+      background: #071a32;
+      border-bottom: 1px solid #1c4964;
+    }
+    header h1 { margin: 0; color: #4de4ed; }
+    header p { color: #b8d5e8; }
+    main { max-width: 1150px; margin: auto; padding: 25px; }
+    .hero, .panel, .stat {
+      background: #102b46;
+      border: 1px solid #24506b;
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .hero { margin-bottom: 20px; }
+    .hero h2 { color: #53e5ed; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .stat span { color: #b6d1e5; font-size: 14px; }
+    .stat h3 { color: #54e4ed; font-size: 24px; margin: 12px 0 0; }
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .panel h3 { color: #54e4ed; }
+    select, button {
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 8px;
+      margin: 5px 5px 5px 0;
+    }
+    button { background: #10cbd7; color: #062239; font-weight: bold; cursor: pointer; }
+    a { color: #54e4ed; }
+    .status { color: #a9f5c4; }
+    footer { text-align: center; color: #a8c5d8; padding: 25px; }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h1>HydroClim India Dashboard</h1>
-        <p>Rainfall and Monsoon Analysis for India</p>
-        <p>Your dashboard is now connected to the web.</p>
-        <a href="/api/health">Check API Health</a>
-    </div>
+  <header>
+    <h1>HydroClim India</h1>
+    <p>Rainfall & Monsoon Analysis Dashboard</p>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Understand India's Rainfall Patterns</h2>
+      <p>Explore historical rainfall, monsoon seasons, and rainfall data through the HydroClim API.</p>
+      <button onclick="loadData()">Load Dashboard Data</button>
+      <p id="status" class="status">Ready to connect to the API.</p>
+    </section>
+
+    <section class="stats">
+      <div class="stat">
+        <span>Dataset</span>
+        <h3>1901–2015</h3>
+      </div>
+      <div class="stat">
+        <span>Analysis</span>
+        <h3>Rainfall</h3>
+      </div>
+      <div class="stat">
+        <span>Focus</span>
+        <h3>Monsoon</h3>
+      </div>
+    </section>
+
+    <section class="panels">
+      <div class="panel">
+        <h3>Historical Climate Trends</h3>
+        <p>Study long-term rainfall patterns and changes across years.</p>
+        <a href="/api/metadata">View dataset metadata →</a>
+      </div>
+      <div class="panel">
+        <h3>Rainfall & Anomaly Analysis</h3>
+        <p>Explore rainfall excess, deficit, and seasonal variations.</p>
+        <a href="/api/health">Check API health →</a>
+      </div>
+      <div class="panel">
+        <h3>District-Level Analysis</h3>
+        <p>Explore the available district rainfall information.</p>
+        <a href="/api/metadata">View available data →</a>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:18px">
+      <h3>API Response</h3>
+      <pre id="result" style="white-space:pre-wrap;overflow-wrap:anywhere">Click "Load Dashboard Data" to retrieve API information.</pre>
+    </section>
+  </main>
+
+  <footer>HydroClim India Dashboard · Historical rainfall data analysis</footer>
+
+  <script>
+    async function loadData() {
+      const status = document.getElementById("status");
+      const result = document.getElementById("result");
+      status.textContent = "Loading data...";
+      try {
+        const response = await fetch("/api/metadata");
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        result.textContent = JSON.stringify(data, null, 2);
+        status.textContent = "Connected successfully!";
+      } catch (error) {
+        status.textContent = "Could not load data. Please try again.";
+        result.textContent = error.message;
+      }
+    }
+  </script>
 </body>
 </html>
