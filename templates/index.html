@@ -1,131 +1,497 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HydroClim India Dashboard</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      color: #eaf4ff;
-      background: linear-gradient(135deg, #06152e, #0b3150);
-    }
-    header {
-      padding: 28px 6%;
-      background: #071a32;
-      border-bottom: 1px solid #1c4964;
-    }
-    header h1 { margin: 0; color: #4de4ed; }
-    header p { color: #b8d5e8; }
-    main { max-width: 1150px; margin: auto; padding: 25px; }
-    .hero, .panel, .stat {
-      background: #102b46;
-      border: 1px solid #24506b;
-      border-radius: 14px;
-      padding: 22px;
-    }
-    .hero { margin-bottom: 20px; }
-    .hero h2 { color: #53e5ed; }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
-    }
-    .stat span { color: #b6d1e5; font-size: 14px; }
-    .stat h3 { color: #54e4ed; font-size: 24px; margin: 12px 0 0; }
-    .panels {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
-    }
-    .panel h3 { color: #54e4ed; }
-    select, button {
-      padding: 11px 14px;
-      border: 0;
-      border-radius: 8px;
-      margin: 5px 5px 5px 0;
-    }
-    button { background: #10cbd7; color: #062239; font-weight: bold; cursor: pointer; }
-    a { color: #54e4ed; }
-    .status { color: #a9f5c4; }
-    footer { text-align: center; color: #a8c5d8; padding: 25px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydroClim India | Rainfall Analytics</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+  --bg:#081321; --panel:#111f31; --line:#24374c;
+  --text:#e8f1fb; --muted:#91a5bd; --accent:#38bdf8;
+  --green:#34d399; --purple:#a78bfa;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:Arial, sans-serif;
+}
+header {
+  padding:24px 5%; border-bottom:1px solid var(--line);
+  background:#0d1b2b;
+}
+.brand { color:var(--accent); font-size:13px; font-weight:bold; letter-spacing:2px; }
+h1 { margin:9px 0; font-size:clamp(24px,4vw,36px); }
+p { color:var(--muted); }
+main { max-width:1400px; margin:auto; padding:24px 4%; }
+.toolbar, .panel, .stat {
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:15px; padding:18px;
+}
+.toolbar {
+  display:flex; flex-wrap:wrap; gap:14px; align-items:end;
+  margin-bottom:20px;
+}
+.field { flex:1; min-width:150px; }
+label { display:block; color:var(--muted); font-size:12px; margin-bottom:8px; }
+input, select, button {
+  width:100%; padding:11px; border-radius:8px;
+  border:1px solid var(--line); background:#0a1726;
+  color:var(--text); font-size:14px;
+}
+button { cursor:pointer; background:#087ca8; border:0; font-weight:bold; }
+button:hover { opacity:.85; }
+.secondary { background:#263a52; }
+.stats {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px; margin-bottom:20px;
+}
+.stat { min-height:120px; }
+.stat small { color:var(--muted); }
+.stat h2 { font-size:26px; margin:16px 0 6px; overflow-wrap:anywhere; }
+.stat:nth-child(2) h2 { color:var(--accent); }
+.stat:nth-child(3) h2 { color:var(--green); }
+.stat:nth-child(4) h2 { color:var(--purple); }
+.grid {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px; margin-bottom:20px;
+}
+.panel { min-width:0; margin-bottom:0; }
+.panel h3 { margin-top:0; font-size:17px; }
+.chart-wrap { height:300px; position:relative; }
+pre {
+  white-space:pre-wrap; overflow-wrap:anywhere; color:#b9d6ee;
+  background:#091625; padding:12px; border-radius:8px;
+  max-height:330px; overflow:auto; font-size:12px;
+}
+.table-wrap { overflow:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th,td { padding:11px; text-align:left; border-bottom:1px solid var(--line); }
+th { color:var(--accent); background:#0b1929; }
+#status { color:var(--muted); font-size:13px; }
+footer { text-align:center; padding:25px; color:var(--muted); font-size:12px; }
+@media(max-width:750px) {
+  .grid { grid-template-columns:1fr; }
+  main { padding:16px 12px; }
+}
+</style>
 </head>
+
 <body>
-  <header>
-    <h1>HydroClim India</h1>
-    <p>Rainfall & Monsoon Analysis Dashboard</p>
-  </header>
+<header>
+  <div class="brand">HYDROCLIM INDIA</div>
+  <h1>Rainfall Analytics Dashboard</h1>
+  <p>Explore historical rainfall patterns, monsoon behaviour and statistical forecasts across India.</p>
+  <div id="status">Connecting to rainfall analytics API...</div>
+</header>
 
-  <main>
-    <section class="hero">
-      <h2>Understand India's Rainfall Patterns</h2>
-      <p>Explore historical rainfall, monsoon seasons, and rainfall data through the HydroClim API.</p>
-      <button onclick="loadData()">Load Dashboard Data</button>
-      <p id="status" class="status">Ready to connect to the API.</p>
-    </section>
+<main>
+  <section class="toolbar">
+    <div class="field">
+      <label for="subdivision">Subdivision</label>
+      <select id="subdivision">
+        <option value="ALL INDIA">ALL INDIA</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="yearStart">Start year</label>
+      <input id="yearStart" type="number" min="1901" max="2015" value="1901">
+    </div>
+    <div class="field">
+      <label for="yearEnd">End year</label>
+      <input id="yearEnd" type="number" min="1901" max="2015" value="2015">
+    </div>
+    <div class="field">
+      <button id="applyBtn" onclick="loadDashboard()">Apply Filters</button>
+    </div>
+    <div class="field">
+      <button class="secondary" onclick="downloadCSV()">Download CSV</button>
+    </div>
+  </section>
 
-    <section class="stats">
-      <div class="stat">
-        <span>Dataset</span>
-        <h3>1901–2015</h3>
-      </div>
-      <div class="stat">
-        <span>Analysis</span>
-        <h3>Rainfall</h3>
-      </div>
-      <div class="stat">
-        <span>Focus</span>
-        <h3>Monsoon</h3>
-      </div>
-    </section>
+  <section class="stats" id="stats">
+    <article class="stat"><small>Rainfall KPI 1</small><h2>—</h2><small>Waiting for data</small></article>
+    <article class="stat"><small>Rainfall KPI 2</small><h2>—</h2><small>Waiting for data</small></article>
+    <article class="stat"><small>Rainfall KPI 3</small><h2>—</h2><small>Waiting for data</small></article>
+    <article class="stat"><small>Rainfall KPI 4</small><h2>—</h2><small>Waiting for data</small></article>
+  </section>
 
-    <section class="panels">
-      <div class="panel">
-        <h3>Historical Climate Trends</h3>
-        <p>Study long-term rainfall patterns and changes across years.</p>
-        <a href="/api/metadata">View dataset metadata →</a>
-      </div>
-      <div class="panel">
-        <h3>Rainfall & Anomaly Analysis</h3>
-        <p>Explore rainfall excess, deficit, and seasonal variations.</p>
-        <a href="/api/health">Check API health →</a>
-      </div>
-      <div class="panel">
-        <h3>District-Level Analysis</h3>
-        <p>Explore the available district rainfall information.</p>
-        <a href="/api/metadata">View available data →</a>
-      </div>
-    </section>
+  <section class="grid">
+    <article class="panel">
+      <h3>Historical Rainfall Trend</h3>
+      <p>Annual rainfall values from the selected dataset, where available.</p>
+      <div class="chart-wrap"><canvas id="rainChart"></canvas></div>
+    </article>
 
-    <section class="panel" style="margin-top:18px">
-      <h3>API Response</h3>
-      <pre id="result" style="white-space:pre-wrap;overflow-wrap:anywhere">Click "Load Dashboard Data" to retrieve API information.</pre>
-    </section>
-  </main>
+    <article class="panel">
+      <h3>Rainfall Forecast</h3>
+      <p>Statistical forecast from the existing API.</p>
+      <button onclick="loadForecast()">Load Forecast</button>
+      <pre id="forecast">Select filters, then load the forecast.</pre>
+    </article>
 
-  <footer>HydroClim India Dashboard · Historical rainfall data analysis</footer>
+    <article class="panel">
+      <h3>Correlation Analysis</h3>
+      <p>Explore relationships returned by the correlation API.</p>
+      <button onclick="loadCorrelation()">Load Correlation</button>
+      <pre id="correlation">Click the button to load correlation results.</pre>
+    </article>
 
-  <script>
-    async function loadData() {
-      const status = document.getElementById("status");
-      const result = document.getElementById("result");
-      status.textContent = "Loading data...";
-      try {
-        const response = await fetch("/api/metadata");
-        if (!response.ok) throw new Error("HTTP " + response.status);
-        const data = await response.json();
-        result.textContent = JSON.stringify(data, null, 2);
-        status.textContent = "Connected successfully!";
-      } catch (error) {
-        status.textContent = "Could not load data. Please try again.";
-        result.textContent = error.message;
+    <article class="panel">
+      <h3>API Details</h3>
+      <p>Connection and dataset information.</p>
+      <button class="secondary" onclick="loadMetadata()">Refresh Metadata</button>
+      <pre id="metadata">Loading metadata...</pre>
+    </article>
+  </section>
+
+  <section class="panel">
+    <h3>Rainfall Data Explorer</h3>
+    <div class="toolbar" style="padding:0;border:0;background:transparent">
+      <div class="field">
+        <label for="search">Search visible records</label>
+        <input id="search" placeholder="Search year or value..." oninput="renderTable()">
+      </div>
+      <div class="field">
+        <button class="secondary" onclick="loadTable()">Refresh Data Table</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead id="tableHead"><tr><th>Data</th></tr></thead>
+        <tbody id="tableBody"><tr><td>Loading data...</td></tr></tbody>
+      </table>
+    </div>
+    <p id="tableStatus">The table uses data returned by your API.</p>
+  </section>
+</main>
+
+<footer>HydroClim India Dashboard · Historical rainfall analysis · Data period 1901–2015</footer>
+
+<script>
+let rainChart = null;
+let tableColumns = [];
+let tableRecords = [];
+
+const $ = id => document.getElementById(id);
+
+function selectedSubdivision() {
+  return $('subdivision').value || 'ALL INDIA';
+}
+
+function selectedYears() {
+  let start = Number($('yearStart').value);
+  let end = Number($('yearEnd').value);
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) ||
+      start < 1901 || end > 2015 || start > end) {
+    throw new Error('Enter a valid year range between 1901 and 2015.');
+  }
+  return { start, end };
+}
+
+async function api(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error('API request failed: HTTP ' + response.status);
+  return response.json();
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'number') {
+    return Number(value.toFixed(2)).toLocaleString();
+  }
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function queryString(values) {
+  return new URLSearchParams(values).toString();
+}
+
+function showError(id, error) {
+  $(id).textContent = 'Could not load data: ' + error.message;
+}
+
+async function loadMetadata() {
+  try {
+    const data = await api('/api/metadata');
+    $('metadata').textContent = JSON.stringify(data, null, 2);
+
+    const list = data.subdivisions;
+    if (Array.isArray(list) && list.length) {
+      const select = $('subdivision');
+      const oldValue = select.value;
+      select.innerHTML = '';
+
+      const all = document.createElement('option');
+      all.value = 'ALL INDIA';
+      all.textContent = 'ALL INDIA';
+      select.appendChild(all);
+
+      list.forEach(item => {
+        const value = typeof item === 'string'
+          ? item
+          : (item.name || item.SUBDIVISION || item.subdivision || item.value);
+
+        if (value && value !== 'ALL INDIA') {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          select.appendChild(option);
+        }
+      });
+
+      if ([...select.options].some(o => o.value === oldValue)) {
+        select.value = oldValue;
       }
     }
-  </script>
+  } catch (error) {
+    showError('metadata', error);
+  }
+}
+
+function renderKPIs(data) {
+  const preferred = [
+    ['Average Rainfall', ['average_rainfall','avg_rainfall','mean_rainfall','average','mean']],
+    ['Total Rainfall', ['total_rainfall','total','rainfall_total']],
+    ['Maximum Rainfall', ['max_rainfall','maximum_rainfall','max','maximum']],
+    ['Minimum Rainfall', ['min_rainfall','minimum_rainfall','min','minimum']]
+  ];
+
+  const source = data && typeof data === 'object' ? data : {};
+  const entries = Object.entries(source).filter(([key, value]) =>
+    typeof value === 'number' || typeof value === 'string'
+  );
+
+  const used = new Set();
+  const cards = preferred.map(([label, keys]) => {
+    const found = entries.find(([key]) =>
+      keys.includes(key.toLowerCase()) && !used.has(key)
+    );
+    if (found) used.add(found[0]);
+    return {
+      label: found ? found[0].replaceAll('_', ' ') : label,
+      value: found ? found[1] : null
+    };
+  });
+
+  $('stats').innerHTML = '';
+  cards.forEach((card, i) => {
+    const article = document.createElement('article');
+    article.className = 'stat';
+
+    const small = document.createElement('small');
+    small.textContent = card.label;
+    const h2 = document.createElement('h2');
+    h2.textContent = formatValue(card.value);
+    const note = document.createElement('small');
+    note.textContent = card.value === null ? 'Not provided by API' : 'Selected filters';
+
+    article.append(small, h2, note);
+    $('stats').appendChild(article);
+  });
+
+  if (entries.length === 0) {
+    $('stats').innerHTML =
+      '<article class="stat"><small>KPI response</small><pre>' +
+      escapeHTML(JSON.stringify(source, null, 2)) + '</pre></article>';
+  }
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[char]);
+}
+
+async function loadKPIs() {
+  const years = selectedYears();
+  const params = queryString({
+    subdivision: selectedSubdivision(),
+    year_start: years.start,
+    year_end: years.end
+  });
+  const data = await api('/api/kpi?' + params);
+  renderKPIs(data);
+}
+
+async function loadTable() {
+  try {
+    const years = selectedYears();
+    const params = queryString({
+      dataset: 'subdivision',
+      page: 1,
+      page_size: 500
+    });
+    const data = await api('/api/table?' + params);
+    tableColumns = Array.isArray(data.columns) ? data.columns : [];
+    tableRecords = Array.isArray(data.records) ? data.records : [];
+
+    if (!tableColumns.length && tableRecords.length) {
+      tableColumns = Object.keys(tableRecords[0]);
+    }
+
+    $('tableStatus').textContent =
+      'Loaded ' + tableRecords.length + ' records. Showing matching records from the API response.';
+    renderTable();
+    renderRainChart(years);
+  } catch (error) {
+    $('tableStatus').textContent = error.message;
+    $('tableHead').innerHTML = '<tr><th>Table unavailable</th></tr>';
+    $('tableBody').innerHTML = '<tr><td>Check the /api/table endpoint.</td></tr>';
+  }
+}
+
+function renderTable() {
+  const query = $('search').value.toLowerCase();
+  const filtered = tableRecords.filter(row => {
+    const text = Object.values(row).join(' ').toLowerCase();
+    return text.includes(query);
+  });
+
+  $('tableHead').innerHTML = '';
+  const tr = document.createElement('tr');
+  tableColumns.forEach(column => {
+    const th = document.createElement('th');
+    th.textContent = column;
+    tr.appendChild(th);
+  });
+  $('tableHead').appendChild(tr);
+
+  $('tableBody').innerHTML = '';
+  filtered.slice(0, 100).forEach(row => {
+    const tr = document.createElement('tr');
+    tableColumns.forEach(column => {
+      const td = document.createElement('td');
+      td.textContent = formatValue(row[column]);
+      tr.appendChild(td);
+    });
+    $('tableBody').appendChild(tr);
+  });
+
+  if (!filtered.length) {
+    $('tableBody').innerHTML =
+      '<tr><td colspan="' + Math.max(tableColumns.length, 1) +
+      '">No matching records found.</td></tr>';
+  }
+}
+
+function renderRainChart(years) {
+  const yearColumn = tableColumns.find(c =>
+    ['year', 'year_start', 'yr'].includes(c.toLowerCase())
+  );
+  const rainfallColumn = tableColumns.find(c =>
+    ['annual', 'annual rainfall', 'rainfall', 'annual_rainfall'].includes(c.toLowerCase())
+  );
+
+  const points = tableRecords.filter(row => {
+    const year = Number(row[yearColumn]);
+    return yearColumn && rainfallColumn &&
+      year >= years.start && year <= years.end &&
+      Number.isFinite(Number(row[rainfallColumn]));
+  }).sort((a, b) => Number(a[yearColumn]) - Number(b[yearColumn]));
+
+  const canvas = $('rainChart');
+  if (rainChart) rainChart.destroy();
+
+  if (!points.length) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  rainChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: points.map(row => row[yearColumn]),
+      datasets: [{
+        label: rainfallColumn,
+        data: points.map(row => Number(row[rainfallColumn])),
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56,189,248,0.12)',
+        borderWidth: 2,
+        fill: true,
+        pointRadius: 1,
+        tension: 0.25
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#e8f1fb' } } },
+      scales: {
+        x: { ticks: { color: '#91a5bd', maxTicksLimit: 10 }, grid: { color: '#24374c' } },
+        y: { ticks: { color: '#91a5bd' }, grid: { color: '#24374c' } }
+      }
+    }
+  });
+}
+
+async function loadForecast() {
+  try {
+    const data = await api('/api/forecast?' + queryString({
+      subdivision: selectedSubdivision(),
+      metric: 'ANNUAL',
+      horizon: 10
+    }));
+    $('forecast').textContent = JSON.stringify(data, null, 2);
+  } catch (error) {
+    showError('forecast', error);
+  }
+}
+
+async function loadCorrelation() {
+  try {
+    const data = await api('/api/correlation?' + queryString({
+      mode: 'seasons',
+      subdivision: selectedSubdivision()
+    }));
+    $('correlation').textContent = JSON.stringify(data, null, 2);
+  } catch (error) {
+    showError('correlation', error);
+  }
+}
+
+function downloadCSV() {
+  try {
+    const years = selectedYears();
+    const params = queryString({
+      dataset: 'subdivision',
+      subdivision: selectedSubdivision(),
+      year_start: years.start,
+      year_end: years.end
+    });
+    window.location.href = '/api/export?' + params;
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function loadDashboard() {
+  try {
+    $('status').textContent = 'Loading rainfall analytics...';
+    await loadKPIs();
+    await loadTable();
+    $('status').textContent = 'Dashboard connected. Check individual panels for any API errors.';
+  } catch (error) {
+    $('status').textContent = error.message;
+  }
+}
+
+async function startDashboard() {
+  try {
+    const health = await api('/api/health');
+    $('status').textContent = 'API status: ' + health.status + ' · ' + health.service;
+  } catch (error) {
+    $('status').textContent = 'API connection failed: ' + error.message;
+  }
+  await loadMetadata();
+  await loadDashboard();
+}
+
+startDashboard();
+</script>
 </body>
 </html>
